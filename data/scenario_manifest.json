@@ -1,16 +1,22 @@
 {
+  "scenario_id": "front_collision_demo_01",
+  "description": "Deterministic front-collision demonstration scenario",
+  "data_source": "simulated",
   "segments": [
     {
       "event": "highway",
-      "duration_ms": 32700
+      "duration_ms": 32700,
+      "phase": "Normal"
     },
     {
       "event": "pre_crash",
-      "duration_ms": 300
+      "duration_ms": 300,
+      "phase": "Pre-Crash"
     },
     {
       "event": "front_collision",
-      "duration_ms": 3000
+      "duration_ms": 3000,
+      "phase": "Crash"
     }
   ],
   "timeline": {

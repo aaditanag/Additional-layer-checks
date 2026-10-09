@@ -1,29 +1,43 @@
-venv/
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
-*.egg-info/
-dist/
+env/
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
 .eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
 .env
+.venv
+env/
+venv/
+ENV/
 
-# Jupyter checkpoints
-.ipynb_checkpoints/
-
-# Model files (track with Git LFS if needed)
-models/*.pkl
-
-# Data — raw synthetic is reproducible, no need to track
-data/synthetic/*.csv
-data/processed/*.csv
-
-# VS Code
+# IDEs
 .vscode/
-*.code-workspace
+.idea/
+*.swp
+*.swo
 
-# OS
-.DS_Store
-Thumbs.db
+# Project specific
+AIRBAG_DEPLOYED.lock
+data/live_data*.csv

@@ -235,6 +235,72 @@ canvas.sp{width:100%;height:26px;display:block;border-radius:3px;}
 
 /* Lean arc canvas */
 #lean-canvas{display:block;}
+
+/* ─── Control Panel ─── */
+#ctrl-panel{
+  position:absolute;left:24px;bottom:120px;
+  background:var(--glass);border:1px solid var(--border);border-radius:16px;
+  padding:14px 16px;backdrop-filter:blur(20px);min-width:200px;
+  pointer-events:all;z-index:15;
+}
+.ctrl-title{
+  font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:12px;
+}
+.ctrl-btn{
+  display:block;width:100%;padding:9px 14px;margin-bottom:8px;
+  border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,0.05);
+  color:var(--white);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;text-align:left;letter-spacing:0.3px;
+  transition:all 0.18s;
+}
+.ctrl-btn:hover:not(:disabled){background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);}
+.ctrl-btn:disabled{opacity:0.38;cursor:not-allowed;}
+.ctrl-btn.start{border-color:rgba(16,185,129,0.4);}
+.ctrl-btn.start:hover:not(:disabled){background:rgba(16,185,129,0.12);border-color:var(--green);box-shadow:0 0 14px rgba(16,185,129,0.2);}
+.ctrl-btn.crash{border-color:rgba(255,59,92,0.4);}
+.ctrl-btn.crash:hover:not(:disabled){background:rgba(255,59,92,0.12);border-color:var(--red);box-shadow:0 0 14px rgba(255,59,92,0.2);}
+.ctrl-btn.reset{border-color:rgba(124,58,237,0.4);}
+.ctrl-btn.reset:hover:not(:disabled){background:rgba(124,58,237,0.12);border-color:var(--violet);}
+.mode-label{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:10px 0 6px;}
+.mode-row{display:flex;gap:6px;}
+.mode-chip{
+  flex:1;padding:5px 0;text-align:center;font-size:10px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;border-radius:8px;border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;transition:all 0.2s;
+  background:rgba(255,255,255,0.03);
+}
+.mode-chip.active{
+  background:rgba(0,212,255,0.12);border-color:rgba(0,212,255,0.5);color:var(--cyan);
+  box-shadow:0 0 10px rgba(0,212,255,0.15);
+}
+#ctrl-status{
+  margin-top:10px;padding:7px 10px;border-radius:8px;
+  font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);
+  word-break:break-word;line-height:1.4;
+}
+#ctrl-status.ok{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:var(--green);}
+#ctrl-status.warn{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);color:var(--amber);}
+#ctrl-status.err{background:rgba(255,59,92,0.1);border-color:rgba(255,59,92,0.3);color:var(--red);}
+#pi-ack-panel{
+  display:none;margin-top:8px;padding:8px 10px;border-radius:8px;
+  font-size:10px;color:var(--muted);border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);line-height:1.5;
+}
+#pi-ack-panel.show{display:block;}
+#pi-ack-panel .ack-title{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);margin-bottom:4px;}
+/* ─── ML Eval Panel ─── */
+#ml-eval-panel{
+  display:none;position:absolute;top:230px;left:24px;
+  background:var(--glass);border:1px solid rgba(0,212,255,0.2);border-radius:14px;
+  padding:12px 16px;backdrop-filter:blur(20px);min-width:200px;z-index:15;
+}
+#ml-eval-panel.show{display:block;}
+.eval-title{font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:8px;}
+.eval-row{display:flex;justify-content:space-between;margin-bottom:5px;}
+.eval-key{font-size:10px;color:var(--muted);}
+.eval-val{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--white);}
 </style>
 </head>
 <body>
@@ -396,6 +462,35 @@ canvas.sp{width:100%;height:26px;display:block;border-radius:3px;}
       <div class="bb-item"><span class="bb-key">CSV / Lock</span><span class="bb-val" style="color:var(--green)">Saved / Locked</span></div>
     </div>
   </div>
+
+  <!-- ─── Control Panel ─── -->
+  <div id="ctrl-panel">
+    <div class="ctrl-title">Simulation Control</div>
+    <button class="ctrl-btn start" id="btn-start" onclick="cmdStartRide()">▶ Start Ride</button>
+    <button class="ctrl-btn crash" id="btn-crash" onclick="cmdSimulateCrash()" disabled>💥 Simulate Crash</button>
+    <button class="ctrl-btn reset" id="btn-reset" onclick="cmdReset()" disabled>↺ Reset</button>
+    <div class="mode-label">Mode</div>
+    <div class="mode-row">
+      <div class="mode-chip active" id="mode-forced" onclick="setMode('forced')">Forced</div>
+      <div class="mode-chip" id="mode-ml" onclick="setMode('ml')">ML Eval</div>
+    </div>
+    <div id="ctrl-status" class="">IDLE — Ready</div>
+    <div id="pi-ack-panel">
+      <div class="ack-title">Pi Actuator Status</div>
+      <div id="pi-ack-detail">—</div>
+    </div>
+  </div>
+
+  <!-- ─── ML Evaluation Panel (Mode B) ─── -->
+  <div id="ml-eval-panel">
+    <div class="eval-title">ML Evaluation Log</div>
+    <div class="eval-row"><span class="eval-key">Mode</span><span class="eval-val" id="eval-mode">—</span></div>
+    <div class="eval-row"><span class="eval-key">GT Marker</span><span class="eval-val" id="eval-marker">—</span></div>
+    <div class="eval-row"><span class="eval-key">Manifest Crash</span><span class="eval-val" id="eval-mcrash">—</span></div>
+    <div class="eval-row"><span class="eval-key">ML Deploy</span><span class="eval-val" id="eval-mldeploy">Pending</span></div>
+    <div class="eval-row"><span class="eval-key">Detection Lat</span><span class="eval-val" id="eval-lat">—</span></div>
+  </div>
+
 </div>
 
 <!-- Loading -->
@@ -1439,29 +1534,49 @@ function runBrowserML(f){
 // ─── WEBSOCKET ────────────────────────────────────────────────────────────────
 function connectWS(){
   ws=new WebSocket('ws://'+location.host+'/ws');
-  ws.onopen=()=>{ws.send(JSON.stringify({type:'browser_connect'}));setDot('ws-dot','ws-label','Connected',true);};
-  ws.onclose=()=>{setDot('ws-dot','ws-label','Offline',false);setTimeout(connectWS,3000);};
+  ws.onopen=()=>{
+    ws.send(JSON.stringify({type:'browser_connect'}));
+    setDot('ws-dot','ws-label','Connected',true);
+    // Enable Start Ride now that WS is open
+    const btn = document.getElementById('btn-start');
+    if(btn && (SIM_STATE==='IDLE'||SIM_STATE==='ERROR')) btn.disabled=false;
+  };
+  ws.onclose=()=>{
+    setDot('ws-dot','ws-label','Offline',false);
+    const btn = document.getElementById('btn-start');
+    if(btn) btn.disabled=true;
+    setTimeout(connectWS,3000);
+  };
   ws.onmessage=(ev)=>{
     const msg=JSON.parse(ev.data);
-    if(msg.type==='server_hello' && msg.pi_connected) setDot('pi-dot','pi-label','Pi Active',true);
+
+    if(msg.type==='server_hello'){
+      if(msg.pi_connected) setDot('pi-dot','pi-label','Pi Active',true);
+      // Enable Start Ride if we just connected
+      if(SIM_STATE==='IDLE' || SIM_STATE==='ERROR') setSimState('IDLE');
+    }
+
     if(msg.type==='pi_status') setDot('pi-dot','pi-label',msg.connected?'Pi Active':'Pi Offline',msg.connected);
+
     if(msg.type==='playback_start'){
       const bk=msg.biome||'hill_station';
       buildWorld(bk);
       buildTimelineBar(msg.manifest, msg.duration_ms);
-      setDot('pi-dot','pi-label','Pi Active',true);
       hideLoading();
+      if(SIM_STATE!=='CRASHING' && SIM_STATE!=='CRASHED') setSimState('RIDING');
       setTimeout(() => {
         if(ws && ws.readyState===WebSocket.OPEN){
           ws.send(JSON.stringify({type:'browser_ready'}));
         }
       }, 600);
     }
+
     if(msg.type==='sensor_frame'){
       updateBike(msg);updateSparklines(msg);updateHUD(msg.label);
       document.getElementById('progress-fill').style.width=(msg.progress*100)+'%';
       runBrowserML(msg);serverReady=true;
     }
+
     if(msg.type==='pi_verdict'){
       const L=['NORMAL','NEAR-CRASH','CRASH'];
       const p1=msg.p1_label??0, p2=msg.p2_label??0;
@@ -1479,28 +1594,89 @@ function connectWS(){
 
       compareML();
 
+      // ML-confirmed crash (independent of Simulate Crash button)
       if(msg.deployed&&!deployed){
         deployed=true;
-        triggerCrash();
+        mlDeployTs = msg.deploy_ts || msg.t_ms;
+        // Trigger visual crash only if we haven't already (forced mode may have triggered it)
+        if(SIM_STATE!=='CRASHING' && SIM_STATE!=='CRASHED') triggerCrash();
+        setSimState('CRASHED');
         showBB(msg);
 
-        // Show Deploy marker on Timeline
-        const marker = document.getElementById('tl-deploy-marker');
-        if (marker) {
-          marker.style.display = 'block';
-          marker.style.left = (simP * 100) + '%';
+        // Update ML eval panel
+        const mldEl = document.getElementById('eval-mldeploy');
+        if(mldEl) mldEl.textContent = Math.round(mlDeployTs) + 'ms';
+        if(gtMarkerMs !== null && currentManifestData) {
+          const mCrash = currentManifestData.timeline?.crash_ms;
+          const lat = mlDeployTs - (mCrash || gtMarkerMs);
+          const latEl2 = document.getElementById('eval-lat');
+          if(latEl2) latEl2.textContent = Math.round(lat) + 'ms';
         }
 
-        // Show detection latency against known crash time if available
+        // Deploy marker on Timeline
+        const marker = document.getElementById('tl-deploy-marker');
+        if (marker) { marker.style.display='block'; marker.style.left=(simP*100)+'%'; }
+
+        // Detection latency display
         const knownCrashMs = currentManifestData?.timeline?.crash_ms;
         const latEl = document.getElementById('tl-latency');
         if (latEl && msg.deploy_ts !== undefined && knownCrashMs !== undefined) {
-          latEl.style.display = 'inline';
+          latEl.style.display='inline';
           const diff = (msg.deploy_ts - knownCrashMs).toFixed(0);
-          latEl.textContent = `Deploy @ ${Math.round(msg.deploy_ts)}ms (${diff > 0 ? '+' : ''}${diff}ms vs crash onset)`;
+          latEl.textContent = `ML Deploy @ ${Math.round(msg.deploy_ts)}ms (${diff>0?'+':''}${diff}ms vs crash onset)`;
         }
       }
     }
+
+    // Mode A: crash test status from server
+    if(msg.type==='crash_test_status'){
+      if(msg.status==='forwarded_to_pi'){
+        setCtrlStatus('Crash test forwarded to Pi — awaiting ack', 'ok');
+      } else if(msg.status==='pi_offline'){
+        setCtrlStatus('Pi OFFLINE — visual crash only, no hardware', 'warn');
+        setSimState('CRASHED');
+      } else if(msg.status==='rejected'){
+        setCtrlStatus('Rejected: ' + (msg.reason||'unknown'), 'err');
+        setSimState('CRASHED');
+      } else if(msg.status==='pi_error'){
+        setCtrlStatus('Pi error: ' + (msg.reason||'unknown'), 'err');
+        setSimState('CRASHED');
+      }
+    }
+
+    // Mode A: Pi actuator acknowledgement
+    if(msg.type==='actuator_status'){
+      const ackStatus = msg.status || '';
+      if(ackStatus==='buzzer_command_issued'){
+        setCtrlStatus('Pi: Buzzer pattern issued — airbag DISARMED (safe demo)', 'ok');
+      } else if(ackStatus==='rejected'){
+        setCtrlStatus('Pi rejected: ' + (msg.reason||''), 'err');
+      } else if(ackStatus==='actuator_error'){
+        setCtrlStatus('Pi actuator error: ' + (msg.error||''), 'err');
+      } else {
+        setCtrlStatus('Pi ack: ' + ackStatus, '');
+      }
+      showPiAck(msg);
+      if(SIM_STATE==='CRASHING') setSimState('CRASHED');
+    }
+
+    // Mode B: ML evaluation marker acknowledged
+    if(msg.type==='ml_marker_ack'){
+      if(msg.status==='recorded'){
+        const mCrash = msg.manifest_crash_ms;
+        const mcrEl  = document.getElementById('eval-mcrash');
+        if(mcrEl && mCrash !== undefined) mcrEl.textContent = Math.round(mCrash) + 'ms';
+        setCtrlStatus('GT marker recorded — ML running independently', 'ok');
+      } else {
+        setCtrlStatus('Marker error: ' + (msg.reason||''), 'err');
+      }
+    }
+
+    // Mode B: marker broadcast (other browser tabs)
+    if(msg.type==='ml_evaluation_marker'){
+      // Just informational — already handled via ml_marker_ack for the originating tab
+    }
+
     if(msg.type==='playback_done'){
       hideLoading();
       simDone=true;
@@ -1510,8 +1686,9 @@ function connectWS(){
       document.getElementById('badge').style.color='var(--green)';
       document.getElementById('badge').style.borderColor='rgba(16, 185, 129, 0.4)';
       document.getElementById('launch-btn').disabled=false;
+      if(SIM_STATE==='RIDING') setSimState('CRASHED');
     }
-    if(msg.type==='error'){hideLoading();alert(msg.msg);}
+    if(msg.type==='error'){hideLoading();setCtrlStatus('Server error: '+(msg.msg||''), 'err');setSimState('ERROR');}
   };
 }
 
@@ -1581,6 +1758,205 @@ window.usePreset = (el) => {
 
 // Allow Enter key to launch
 document.getElementById('prompt-input').addEventListener('keydown',e=>{if(e.key==='Enter')window.launchScenario();});
+
+// ─── SIMULATION STATE MACHINE ─────────────────────────────────────────────────
+// States: IDLE | RIDING | CRASHING | CRASHED | RESETTING | ERROR
+let SIM_STATE = 'IDLE';
+let simMode   = 'forced';  // 'forced' | 'ml'
+let activeEventId = null;  // current crash_test or ml_marker event ID
+let mlDeployTs = null;     // timestamp when ML deploy confirmed
+let gtMarkerMs = null;     // ground-truth marker timestamp
+const DEMO_SCENARIO_ID = 'front_collision_demo_01';
+
+function setSimState(s) {
+  SIM_STATE = s;
+  const statusEl = document.getElementById('ctrl-status');
+  const btnStart  = document.getElementById('btn-start');
+  const btnCrash  = document.getElementById('btn-crash');
+  const btnReset  = document.getElementById('btn-reset');
+
+  const stateMap = {
+    IDLE      : { text:'IDLE — Ready',            cls:'',    start:true,  crash:false, reset:false },
+    RIDING    : { text:'RIDING — Live Telemetry', cls:'ok',  start:false, crash:true,  reset:true  },
+    CRASHING  : { text:'CRASHING — Impact!',      cls:'warn',start:false, crash:false, reset:false },
+    CRASHED   : { text:'CRASHED — Playback Done', cls:'warn',start:false, crash:false, reset:true  },
+    RESETTING : { text:'RESETTING...',             cls:'',    start:false, crash:false, reset:false },
+    ERROR     : { text:'ERROR',                   cls:'err', start:true,  crash:false, reset:true  },
+  };
+  const cfg = stateMap[s] || stateMap.IDLE;
+  if (statusEl) {
+    statusEl.className = cfg.cls;
+    statusEl.textContent = cfg.text;
+  }
+  if (btnStart)  btnStart.disabled  = !cfg.start  || !(ws && ws.readyState === WebSocket.OPEN);
+  if (btnCrash)  btnCrash.disabled  = !cfg.crash;
+  if (btnReset)  btnReset.disabled  = !cfg.reset;
+}
+
+function setMode(m) {
+  simMode = m;
+  document.getElementById('mode-forced').className = 'mode-chip' + (m==='forced' ? ' active' : '');
+  document.getElementById('mode-ml').className     = 'mode-chip' + (m==='ml'     ? ' active' : '');
+  const evalPanel = document.getElementById('ml-eval-panel');
+  if (evalPanel) evalPanel.className = m === 'ml' ? 'show' : '';
+  const evalMode  = document.getElementById('eval-mode');
+  if (evalMode) evalMode.textContent = m === 'ml' ? 'ML EVALUATION' : 'FORCED DEMO';
+  setCtrlStatus(m === 'ml' ? 'Mode B: Independent ML Eval' : 'Mode A: Forced Demo Response', '');
+}
+
+function setCtrlStatus(text, cls) {
+  const el = document.getElementById('ctrl-status');
+  if (el) { el.textContent = text; el.className = cls || ''; }
+}
+
+function genEventId() {
+  return 'ev-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
+}
+
+// ─── COMMAND: START RIDE ──────────────────────────────────────────────────────
+window.cmdStartRide = async () => {
+  if (SIM_STATE !== 'IDLE' && SIM_STATE !== 'ERROR') {
+    setCtrlStatus('Already riding — press Reset first', 'warn'); return;
+  }
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    setCtrlStatus('Server offline — run: python layer_2/server.py', 'err');
+    setSimState('ERROR'); return;
+  }
+  activeEventId = null; mlDeployTs = null; gtMarkerMs = null;
+  hidePiAck();
+  setSimState('RIDING');
+  setCtrlStatus('Starting ride...', 'ok');
+
+  // Use deterministic pre-decided scenario (no LLM call for direct Start Ride)
+  const biome = 'hill_station';
+  buildWorld(biome);
+  showLoading('Loading Scenario...', 'front_collision_demo_01 — deterministic telemetry');
+  ws.send(JSON.stringify({
+    type: 'start_playback',
+    biome: biome,
+    scenario: DEMO_SCENARIO_ID,
+    // csv_path omitted → server uses default pre_decided_sensor_data.csv
+  }));
+};
+
+// ─── COMMAND: SIMULATE CRASH ──────────────────────────────────────────────────
+window.cmdSimulateCrash = () => {
+  if (SIM_STATE !== 'RIDING') {
+    setCtrlStatus('Start ride first', 'warn'); return;
+  }
+  if (activeEventId) {
+    setCtrlStatus('Crash event already sent', 'warn'); return;
+  }
+
+  const eid = genEventId();
+  activeEventId = eid;
+
+  // Trigger visual crash effects immediately (always safe to do in browser)
+  triggerCrash();
+  setSimState('CRASHING');
+
+  if (simMode === 'forced') {
+    // Mode A: send validated forced test event to server
+    setCtrlStatus('Sending crash test event...', 'warn');
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      setCtrlStatus('Pi offline — visual crash only', 'warn'); return;
+    }
+    ws.send(JSON.stringify({
+      type       : 'crash_test_requested',
+      event_id   : eid,
+      scenario_id: DEMO_SCENARIO_ID,
+      mode       : 'forced',
+    }));
+  } else {
+    // Mode B: record ground-truth marker, ML detector makes its own decision
+    gtMarkerMs = Date.now();
+    setCtrlStatus('GT marker sent — ML evaluating independently', 'ok');
+    const mEl = document.getElementById('eval-marker');
+    if (mEl) mEl.textContent = Math.round(gtMarkerMs) + ' (user click)';
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(JSON.stringify({
+      type       : 'ml_evaluation_marker',
+      event_id   : eid,
+      scenario_id: DEMO_SCENARIO_ID,
+    }));
+  }
+};
+
+// ─── COMMAND: RESET ───────────────────────────────────────────────────────────
+window.cmdReset = () => {
+  if (SIM_STATE === 'RESETTING') return;
+  setSimState('RESETTING');
+
+  // Cancel playback via new start_playback is handled server-side when needed
+  // Reset browser-side state
+  activeEventId = null; mlDeployTs = null; gtMarkerMs = null;
+  deployed = false; crashActive = false; simDone = false;
+
+  // Reset crash overlays
+  const vEls = ['vignette','white-flash','crack-svg'];
+  vEls.forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.opacity='0';
+  });
+  const banner = document.getElementById('deploy-banner');
+  if (banner) banner.style.display='none';
+  const bb = document.getElementById('bb-panel');
+  if (bb) bb.style.display='none';
+  hidePiAck();
+
+  // Reset HUD
+  const badge = document.getElementById('badge');
+  if (badge) { badge.textContent='NORMAL'; badge.className=''; badge.style.color=''; badge.style.borderColor=''; }
+  document.getElementById('progress-fill').style.width='0%';
+  document.getElementById('tl-playhead').style.left='0%';
+  const depMk = document.getElementById('tl-deploy-marker');
+  if (depMk) depMk.style.display='none';
+  const latEl = document.getElementById('tl-latency');
+  if (latEl) { latEl.style.display='none'; latEl.textContent=''; }
+
+  // Reset ML eval panel
+  ['eval-marker','eval-mcrash','eval-mldeploy','eval-lat'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '—';
+  });
+  const evd = document.getElementById('eval-mldeploy');
+  if (evd) evd.textContent = 'Pending';
+
+  // Reset bloom
+  if (bloomPass) bloomPass.strength = 0.38;
+
+  // Rebuild world
+  buildWorld('hill_station');
+  setSimState('IDLE');
+  setCtrlStatus('IDLE — Reset complete', '');
+
+  // SAFETY: Never re-arm physical airbag on Reset
+  // Hardware safety interlocks are never modified from browser
+};
+
+// ─── PI ACK PANEL ────────────────────────────────────────────────────────────
+function showPiAck(msg) {
+  const panel = document.getElementById('pi-ack-panel');
+  const detail= document.getElementById('pi-ack-detail');
+  if (!panel || !detail) return;
+  panel.className = 'show';
+  detail.innerHTML = [
+    `<b>Status:</b> ${msg.status || '—'}`,
+    `<b>Mode:</b> ${msg.mode || 'forced'}`,
+    `<b>Airbag armed:</b> ${msg.airbag_armed === false ? 'NO (safe)' : (msg.airbag_armed === true ? 'YES' : '—')}`,
+    msg.hardware !== undefined ? `<b>Hardware:</b> ${msg.hardware ? 'GPIO' : 'Simulation'}` : '',
+    msg.error ? `<b>Error:</b> ${msg.error}` : '',
+    msg.note ? `<i style="color:var(--muted)">${msg.note}</i>` : '',
+  ].filter(Boolean).join('<br>');
+  setTimeout(() => { panel.className = ''; }, 15000);
+}
+
+function hidePiAck() {
+  const panel = document.getElementById('pi-ack-panel');
+  if (panel) panel.className = '';
+}
+
+// ─── STATE INITIALIZATION ─────────────────────────────────────────────────────
+setSimState('IDLE');
+setMode('forced');
 
 // ─── MAIN LOOP ────────────────────────────────────────────────────────────────
 function animate(){
